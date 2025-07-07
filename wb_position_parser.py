@@ -41,7 +41,7 @@ def generate_city_params(city):
 
 def create_db():
 
-    """Создаёт таблицу, если не существует"""
+    """Создаёт базу данных, если она не существует"""
 
     conn = sqlite3.connect(DB_FILE, detect_types=sqlite3.PARSE_DECLTYPES)
     cursor = conn.cursor()
@@ -112,10 +112,13 @@ def collect_data():
                 except Exception as e:
                     print(f"Ошибка при запросе или парсинге: {e}")
                     continue
+                
+                start_position = (page - 1) * 100  # предполагаем 100 товаров на страницу
 
                 for idx, product in enumerate(products):
                     brand = product.get('brand', '').strip().lower()
                     supplier = product.get('supplier', '').strip()
+                    global_idx = start_position + idx + 1
 
                     if brand in brands or supplier in suppliers:
                         log_data = product.get('log', {})
@@ -124,8 +127,10 @@ def collect_data():
                         cpm = log_data.get('cpm', 0)
                         tp = log_data.get('tp', '-')
                         is_promo = int(promo_position is not None)
-                        effective_position = promo_position if is_promo else org_position
-
+                        effective_position = global_idx
+                        # Глобальная позиция — как итоговая, нумеруется по порядку без учета страницы. Если нужна позиция с 1 на каждой странице, можно взять из log: 
+                        # effective_position = promo_position if is_promo else org_position
+                        
                         all_results.append([
                             product.get('name', ''),
                             cpm,
